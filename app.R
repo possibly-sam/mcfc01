@@ -23,6 +23,7 @@ library(MASS) # for mvrnorm
 cat(getwd())
 
 source("./mcfc01.R")
+source("~/Documents/stt/mcfc01b/mcfc03.R")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -84,7 +85,7 @@ server <- function(input, output) {
         Risk_ <- Risk_[Risk$Business_Unit__c==input$bu0,]
         
       }
-      cat(input$cov0)
+      # cat(input$cov0)
         
        reps <- min(input$samplesize, Risk_ %>% nrow() )
        Cost <- mc $ manytimes(Risk_, input$repeats, reps, input$cov0) 

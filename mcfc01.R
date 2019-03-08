@@ -198,8 +198,11 @@ mc $ make_histogram <- function(the_cost) {
   the_legend <- the_cost %>% mc$normalize() %>% sapply(mc$nn) %>% unlist()
 
   q0 <- data.frame(the_cost, the_legend)
+  
+  nbin <- (the_cost %>% length())/10 %>% round()
+  nbin <- nbin %>% max(10)
 
-   ggplot(q0, aes(x=the_cost, fill=the_legend))    +    geom_histogram(alpha=0.5, position="identity" )    + theme(axis.line = element_line(size=rel(2)) ,text = element_text(size=24)) + labs(x="$",y="#")
+   ggplot(q0, aes(x=the_cost, fill=the_legend))    +    geom_histogram(alpha=0.5, position="identity", bins=nbin )    + theme(axis.line = element_line(size=rel(2)) ,text = element_text(size=24)) + labs(x="$",y="#")
    
    
   #ggplot(q0, aes(x=the_cost)) +    geom_histogram()
