@@ -15,6 +15,7 @@ Risk <- read.csv("./risk_KA_11.csv", stringsAsFactors = FALSE)
 
 # ignore null values  ==> 129824 rows
 Risk <- Risk[Risk$Risk__Value__c!="NULL",] 
+Risk <- Risk[Risk$Business_Unit__c!="#N/A",] # filter out the summation row
 Risk <- Risk[!is.na(Risk$INDEX),]
 
 #Risk <- Risk[Risk$Risk__Category__c=="Cost", ]

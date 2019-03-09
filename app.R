@@ -34,10 +34,11 @@ ui <- fluidPage(
    # Sidebar with a slider input for number of bins 
    sidebarLayout(
       sidebarPanel(
-        selectInput("i0", "Risk Type", c("Target", "Residual")),
+        selectInput("i0", "Risk Type", c("Target", "Residual", "Inherent")),
+        selectInput("bu0", "Business Unit", c("All", mc $ get_business_units() )),
+        selectInput("ed0", "Extract Date", mc $ get_extract_date() ),
         numericInput("repeats", "Repeats", 99),
         numericInput("samplesize", "SampleSize", 9),
-        selectInput("bu0", "Business Unit", c("All", mc $ get_business_units() )),
         numericInput("cov0", "Covariance", -0.01)
         # textInput("rn0", "Risk Name", "R12286"), 
         #selectInput("rt0", "Risk Type", mc $ get_risk_type ()), 

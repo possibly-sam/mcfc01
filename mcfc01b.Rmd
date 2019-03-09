@@ -1,0 +1,90 @@
+---
+title: "mcfc01b"
+author: "Phillip Abbott"
+date: "March 9, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# MCFC01b
+
+```{r}
+
+
+source("./mcfc01.R")
+source("~/Documents/stt/mcfc01b/mcfc03.R")
+
+
+```
+
+
+
+
+```{r}
+Risk$Business_Unit__c %>% table() %>% pie(main="Business_Unit__c")
+Risk$grc__Risk_Name__c %>% unique() %>% length()
+Risk$Risk__Type__c %>% table() %>% pie(main="Risk__Type__c")
+Risk$ExtractDate %>% table() %>% pie(main="ExtractDate")
+Risk$ReportingMonth %>% table() %>% pie(main="ReportingMonth")
+Risk$grc__Status__c %>% table() %>% pie(main="grc__Status__c")
+Risk$Design_Element__c %>% unique() %>% length()
+Risk$XactHE__Contractual_Allocation__c %>% table() %>% pie(main="XactHE__Contractual_Allocation__c")
+Risk$Risk__Mitigation__c %>% table() %>% pie(main="Risk__Mitigation__c")
+Risk$Row.Labels%>% unique() %>% length()
+Risk$worst %>% abs() %>% log() %>% hist(main="log abs worst", breaks=99)
+Risk$expected  %>% abs() %>% log( )%>% hist(main="log abs expected", breaks=99)
+Risk$best %>% abs() %>% log() %>% hist(main="log abs best", breaks=99)
+Risk$prob  %>% abs() %>% log()%>% hist(main="log abs prob", breaks=99)
+
+
+```
+
+## Extract Date <--> Reporting Month
+
+this shows that there is a 1-1 correspondence between extract date and reporting month
+
+
+```{r}
+
+
+table(Risk$ExtractDate, Risk$ReportingMonth)
+
+
+
+```
+
+
+
+```{r}
+
+# the_business_unit, the_extract_date, the_risk_type ) {
+
+bu0 <- Risk$Business_Unit__c %>% unique()
+ed0 <- Risk$ExtractDate %>% unique()
+rt0 <- Risk$Risk__Mitigation__c %>% unique()
+
+for ( bidx in bu0 %>% seq_along()) {
+  for (eidx in ed0 %>% seq_along()) {
+    for (ridx in rt0 %>% seq_along()) {
+      the_length <- Risk %>% mc$some_good_data( bu0[bidx], ed0[eidx], rt0[ridx]) %>% nrow()
+      paste( bu0[bidx], ed0[eidx], rt0[ridx], ":", the_length, "\n") %>% cat()
+    }
+  }
+}
+
+```
+
+
+
+
+
+
+
+
+
+
+

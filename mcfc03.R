@@ -134,15 +134,15 @@ mc $ make_histogram_discrete <- function(the_cost, Risk_) {
     geom_histogram(alpha=0.5, position="identity",bins=nbin )    + 
     theme(axis.line = element_line(size=rel(2)) ,text = element_text(size=24)) + 
     labs(x="$",y="#") +
-    geom_vline(aes(xintercept = some_discrete_stuff[1])) +
+  #geom_vline(aes(xintercept = some_discrete_stuff[1])) +
   geom_vline(aes(xintercept = some_discrete_stuff[2])) +
-  geom_vline(aes(xintercept = some_discrete_stuff[3])) +
-  geom_vline(aes(xintercept = some_discrete_stuff[4])) +
-  geom_vline(aes(xintercept = some_discrete_stuff[5])) +
-  geom_vline(aes(xintercept = some_discrete_stuff[6])) +
-  geom_vline(aes(xintercept = some_discrete_stuff[7])) + 
-  geom_vline(aes(xintercept = some_discrete_stuff[8])) +
-  geom_vline(aes(xintercept = some_discrete_stuff[9]))
+  #geom_vline(aes(xintercept = some_discrete_stuff[3])) +
+  #geom_vline(aes(xintercept = some_discrete_stuff[4])) +
+  #geom_vline(aes(xintercept = some_discrete_stuff[5])) +
+  #geom_vline(aes(xintercept = some_discrete_stuff[6])) +
+  #geom_vline(aes(xintercept = some_discrete_stuff[7])) + 
+  geom_vline(aes(xintercept = some_discrete_stuff[8])) 
+  # geom_vline(aes(xintercept = some_discrete_stuff[9]))
 
   
   
@@ -153,6 +153,31 @@ mc $ make_histogram_discrete <- function(the_cost, Risk_) {
 
 
 
+# filter by
+# * Business_Unit__c
+# * ExtractDate
+# * Risk__Mitigation__c
+# then clean up the data and analyze
+mc $ some_good_data <- function(the_table, the_business_unit, the_extract_date, the_risk_mitigation ) {
+  
+  R2 <- the_table
+  
+  R2 <- R2[ the_table$Business_Unit__c==the_business_unit,]
+  R2 <- R2[ the_table$ExtractDate==the_extract_date,]
+  R2 <- R2[ the_table$Risk__Mitigation__c==the_risk_mitigation,]
+  
+  
+  R2 <- R2 [!is.na(R2$prob),]
+  R2 <- R2 [!is.na(R2$best),]
+  R2 <- R2 [!is.na(R2$expected),]
+  R2 <- R2 [!is.na(R2$worst),]
+  R2 <- R2 [(R2$best < R2$expected) & (R2$expected < R2$worst), ]
+  
+  R2$prob <- R2$prob/100
+  
+  R2[, c("prob", "worst", "expected", "best")]
+  
+}
 
 
 
