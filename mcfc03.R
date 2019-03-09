@@ -93,9 +93,34 @@ R2 %>% mc$ discrete() %>% plot()
 #####################################################################################
 
 
+
+mc $ filter_bad_data <- function( Risk_ ) {
+  
+  
+  
+  
+  R2 <- Risk_
+  R2 <- R2 [!is.na(R2$prob),]
+  R2 <- R2 [!is.na(R2$best),]
+  R2 <- R2 [!is.na(R2$expected),]
+  R2 <- R2 [!is.na(R2$worst),]
+  R2 <- R2 [(R2$best < R2$expected) & (R2$expected < R2$worst), ]
+  
+  R2$prob <- R2$prob/100
+  
+  
+  if (10 < R2 %>% nrow()) R2 <- R2[1:10, ]
+  
+}
+
 # the_cost = the regular histogram
 # Risk_ = the raw (filtered) data, from which we will generate the discrete approximation
 mc $ make_histogram_discrete <- function(the_cost, Risk_) {
+  
+  
+  
+  some_discrete_stuff <- Risk_ %>% mc $ filter_bad_data() %>% mc$ discrete() 
+  
   
   
   the_legend <- the_cost %>% mc$normalize() %>% sapply(mc$nn) %>% unlist()
@@ -105,7 +130,20 @@ mc $ make_histogram_discrete <- function(the_cost, Risk_) {
   nbin <- (the_cost %>% length())/10 %>% round()
   nbin <- nbin %>% max(10)
   
-  ggplot(q0, aes(x=the_cost, fill=the_legend))    +    geom_histogram(alpha=0.5, position="identity",bins=nbin )    + theme(axis.line = element_line(size=rel(2)) ,text = element_text(size=24)) + labs(x="$",y="#")
+  ggplot(q0, aes(x=the_cost, fill=the_legend))    +    
+    geom_histogram(alpha=0.5, position="identity",bins=nbin )    + 
+    theme(axis.line = element_line(size=rel(2)) ,text = element_text(size=24)) + 
+    labs(x="$",y="#") +
+    geom_vline(aes(xintercept = some_discrete_stuff[1])) +
+  geom_vline(aes(xintercept = some_discrete_stuff[2])) +
+  geom_vline(aes(xintercept = some_discrete_stuff[3])) +
+  geom_vline(aes(xintercept = some_discrete_stuff[4])) +
+  geom_vline(aes(xintercept = some_discrete_stuff[5])) +
+  geom_vline(aes(xintercept = some_discrete_stuff[6])) +
+  geom_vline(aes(xintercept = some_discrete_stuff[7])) + 
+  geom_vline(aes(xintercept = some_discrete_stuff[8])) +
+  geom_vline(aes(xintercept = some_discrete_stuff[9]))
+
   
   
   

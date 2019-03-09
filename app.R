@@ -93,7 +93,7 @@ server <- function(input, output) {
        g_result <<- Cost
        b0 <- (g_result %>% length() )/2
        # qplot(Cost, geom="histogram", main="Cost k GBP") 
-       mc$make_histogram(Cost)
+       mc$make_histogram_discrete(Cost, Risk_)
        
          
    })
