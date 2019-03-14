@@ -27,19 +27,26 @@ source("~/Documents/stt/mcfc01b/mcfc03.R")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
+  title="Monty Carlo's Flying Circus",
    
-   # Application title
-   titlePanel("Monty Carlo's Flying Circus"),
-   
-   # Sidebar with a slider input for number of bins 
-   sidebarLayout(
-      sidebarPanel(
-        selectInput("i0", "Risk Type", c("Target", "Residual", "Inherent")),
-        selectInput("bu0", "Business Unit", c("All", mc $ get_business_units() )),
-        selectInput("ed0", "Extract Date", mc $ get_extract_date() ),
-        numericInput("repeats", "Repeats", 99),
-        numericInput("samplesize", "SampleSize", 9),
-        numericInput("cov0", "Covariance", -0.01)
+  fluidRow(  titlePanel("Monty Carlo's Flying Circus")), # end  row 0
+  
+  fluidRow(
+    column(width=4,
+        selectInput("i0", "Risk Type", c("Target", "Residual", "Inherent"))),
+    column(width=4,
+        selectInput("bu0", "Business Unit", c("All", mc $ get_business_units() ))),
+    column(width=4,
+        selectInput("ed0", "Extract Date", mc $ get_extract_date() ))
+  ), # end row 1
+  fluidRow(
+    column(width=4,
+        numericInput("repeats", "Repeats", 99)),
+    column(width=4,
+        numericInput("samplesize", "SampleSize", 9)),
+    column(width=4,
+        numericInput("cov0", "Covariance", -0.01) )
+  ), # end row 2
         # textInput("rn0", "Risk Name", "R12286"), 
         #selectInput("rt0", "Risk Type", mc $ get_risk_type ()), 
         #selectInput("ed0", "Extract Date", mc $ get_extract_date() ),
@@ -50,21 +57,17 @@ ui <- fluidPage(
         #selectInput("cat0", "All", mc $ get_category () ) # c("Environmental", "Health & Safety", "Reputation", "Quality", "Availability"))
         
         
-      ),
+      fluidRow(
+        column(width=12,
+               plotOutput("distPlot")
+        ) ), # end row 3
+      fluidRow(
+        column(width=12,
+          tableOutput("tbl_info")
+      )) # end row 4
         
-        
-        
+   ) # end fluid page
 
-      # Show a plot of the generated distribution
-      mainPanel(
-         plotOutput("distPlot"),
-         textOutput("info"),
-         textOutput("info2"),
-         textOutput("info3"),
-         tableOutput("tbl_info")
-      )
-   )
-)
 
 g_result <- 1:3
 
@@ -72,20 +75,12 @@ g_result <- 1:3
 server <- function(input, output) {
    
    output$distPlot <- renderPlot({
-      # generate bins based on input$bins from ui.R
-      x    <- faithful[, 2] 
-      # bins <- seq(min(x), max(x), length.out = input$bins + 1)
+       # mc $ manytimes(Risk, input$repeats, input$samplesize) %>% hist( breaks=29, main="Your Histogram")
+     
+     # filter based on the options & clean up the data appropriately
+      Risk_ <- Risk %>% mc $ some_good_data( input$bu0, input$ed0, input$i0)
       
-      # draw the histogram with the specified number of bins
-      # hist(x, breaks = bins, col = 'darkgray', border = 'white')
-       #mc $ manytimes(Risk, input$repeats, input$samplesize) %>% hist( breaks=29, main="Your Histogram")
-      Risk_ <- Risk
-      
-      if (input$bu0 != 'All') {
-        
-        Risk_ <- Risk_[Risk$Business_Unit__c==input$bu0,]
-        
-      }
+      # if (input$bu0 != 'All') {        Risk_ <- Risk_[Risk$Business_Unit__c==input$bu0,]      }
       # cat(input$cov0)
         
        reps <- min(input$samplesize, Risk_ %>% nrow() )
@@ -98,23 +93,6 @@ server <- function(input, output) {
        
          
    })
-   
-   output$info <- renderText( {
-      #g_result %>% summary() 
-     "\n\n\n\n\n\n\n\n."
-   } )
-
-   
-   output$info2 <- renderText( {
-     #g_result %>% summary() 
-     "\n\n\n\n\n\n\n\n."
-   } )
-   
-   output$info3 <- renderText( {
-     #g_result %>% summary() 
-     "\n\n\n\n\n\n\n\n."
-   } )
-   
    
   output$tbl_info <- renderTable({
     input$repeats %>% force() 

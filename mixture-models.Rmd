@@ -1,0 +1,56 @@
+---
+title: "mixture models"
+author: "Phillip Abbott"
+date: "March 13, 2019"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r include=FALSE}
+
+
+mm <- environment(emptyenv())
+
+mm $ pert <- function( b, e, w) {
+  result <- environment()
+  result$mean <- function() (b+4*e+w)/6
+  result$var <- function() ( result$mean() - b) * ( w-result$mean ()) / 7
+  result
+}
+
+
+```
+
+
+# Mixture Model
+
+As I understand it, a very simple *Mixture Model* <https://brilliant.org/wiki/gaussian-mixture-model>  is one of the form
+
+$$ \lambda_1 \cdot N_1 + \lambda_2 \cdot N_2 $$
+
+Where the lambda are probabilities and the *N* are normally distributed.  As an example, consider a typical Risk where we have
+
+* probability = 30%
+* best case = 10k
+* expected = 20k
+* worst case = 50k
+
+Then we can approximate the cost when the risk is triggered with a normal distribution of mean 23.3k and standard deviation 7.13k.  (From the [PERT](https://en.wikipedia.org/wiki/PERT_distribution) equations).  Similarly, we can approximate the cost when the risk is *not* triggered with a normal distribution of mean 1 and standard deviation 0.01 or some similar small numbers that will not affect the overall result significantly.
+
+Then this risk example can be approximated with
+
+$$ (0.7) \cdot N(1,1) + (0.3) \cdot N(23300, 7130) $$
+
+
+The reason I am hopeful that this point of view could be useful is because there seems to be support for it in the  [mclust](https://cran.r-project.org/web/packages/mclust/index.html) R package -- but I still have to check if it really has what we need.  The typical use case there is: given data and an assumption of a mixture model, determine the appropriate parameters for the mixture model.  Whereas here, we want to specify a mixture model and then do simulation with it :-)
+
+
+
+
+

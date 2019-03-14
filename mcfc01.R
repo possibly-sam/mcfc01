@@ -9,7 +9,7 @@
 # Anne-Marie
 # Ken Allan
 
-setwd("/home/phillip/Documents/stt/project-hack-ii/mcfc01/mcfc01")
+# setwd("/home/phillip/Documents/stt/project-hack-ii/mcfc01/mcfc01")
 Risk <- read.csv("./risk_KA_11.csv", stringsAsFactors = FALSE)
 # Risk <- read.csv("/home/phillip/Documents/stt/project-hack-ii/mcfc01/mcfc01/risk_KA_10.csv", stringsAsFactors = FALSE)
 
@@ -49,7 +49,8 @@ mc $ collapse <- function(best, typical, worst, p=1) {
   if (p < runif(1) ) return (0) # risk didn't trigger 
   
   if (typical < best || worst < typical) {
-    #warning("Bad range in collapse()")
+    warning("Bad range in collapse()")
+    return(0)
     tempp_ <- best
     best <- worst
     worst <- tempp_
@@ -61,6 +62,18 @@ mc $ collapse <- function(best, typical, worst, p=1) {
   
   # cat(paste(sd," ", mu))
   rnorm(1, mu, sd)
+  
+}
+
+# precondition:  the_table has the expected columns:  best, expected, worst, prob
+mc$collapse_table <- function(the_table) {
+  mapply( mc$collapse, the_table$best, the_table$expected, the_table$worst, the_table$prob)
+}
+
+mc$ collapse_table_subset_and_accumulate <- function(the_table, n) {
+  
+  the_table %>% sample_n(n) %>% mc$collapse_table() %>% sum() 
+  
   
 }
 
@@ -139,12 +152,13 @@ numberoftimes <- 99
 samplesize=9
 mc $ manytimes <- function(the_table, numberoftimes, samplesize, the_cov = 0.01) {
   
-  if (0 == samplesize) samplesize <- the_table %>% nrow()
+ # if (0 == samplesize) samplesize <- the_table %>% nrow()
   
-  result <- 1:numberoftimes
-  result <- 0
-  for (k in 1:numberoftimes) result[k] <- mc$mc (the_table, samplesize)
-  result
+#  result <- 1:numberoftimes
+#  result <- 0
+#  for (k in 1:numberoftimes) result[k] <- mc$mc (the_table, samplesize)
+#  result
+  1:numberoftimes %>% lapply( function(it) q0 %>% mc$collapse_table_subset_and_accumulate(samplesize)) %>% unlist()
   
 }
 

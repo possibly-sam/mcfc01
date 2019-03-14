@@ -2,7 +2,9 @@
 title: "mcfc01b"
 author: "Phillip Abbott"
 date: "March 9, 2019"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -14,9 +16,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 
+library(tidyverse)
 
 source("./mcfc01.R")
-source("~/Documents/stt/mcfc01b/mcfc03.R")
+source("./mcfc03.R")
 
 
 ```
@@ -67,14 +70,41 @@ bu0 <- Risk$Business_Unit__c %>% unique()
 ed0 <- Risk$ExtractDate %>% unique()
 rt0 <- Risk$Risk__Mitigation__c %>% unique()
 
+llength <- (bu0%>%length()) * (ed0%>%length()) * (rt0%>%length())
+
+bus_unit <- rep("NA", llength)
+ext_date <- rep(0, llength)
+risk_mit <- rep("NA", llength)
+the_length <- rep(0, llength)
+
+k <- 1
+
 for ( bidx in bu0 %>% seq_along()) {
   for (eidx in ed0 %>% seq_along()) {
     for (ridx in rt0 %>% seq_along()) {
-      the_length <- Risk %>% mc$some_good_data( bu0[bidx], ed0[eidx], rt0[ridx]) %>% nrow()
-      paste( bu0[bidx], ed0[eidx], rt0[ridx], ":", the_length, "\n") %>% cat()
+     
+      # paste( bu0[bidx], ed0[eidx], rt0[ridx], ":", the_length, "\n") %>% cat()
+      bus_unit[k] <- bu0[bidx]
+      ext_date[k] <- ed0[eidx]
+      risk_mit[k] <- rt0[ridx]
+      the_length[k] <- Risk %>% mc$some_good_data( bu0[bidx], ed0[eidx], rt0[ridx]) %>% nrow() 
+      k <- k + 1
     }
   }
 }
+
+filter_categories <- data.frame( bus_unit, ext_date, risk_mit, the_length)
+View(filter_categories)
+
+```
+
+
+
+
+```{r}
+
+mc $ make_histogram_discrete_filtered (Risk, "A14 Section 2", 43348, "Target", 999, 999)
+
 
 ```
 
@@ -83,6 +113,20 @@ for ( bidx in bu0 %>% seq_along()) {
 
 
 
+
+GET https://dev.azure.com/{organization}/{project}/_apis/wit/classificationnodes/{structureGroup}/{path}?api-version=5.0
+
+
+
+GET https://dev.azure.com/pma0734/MCFC02/_apis/wit/classificationnodes/Areas?api-version=5.0
+
+
+
+```{r}
+
+q0 <- Risk %>% mc $ get_the_filtered_data ( "A14 Section 2", 43348, "Target")
+
+```
 
 
 

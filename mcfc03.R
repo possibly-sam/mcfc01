@@ -93,8 +93,8 @@ R2 %>% mc$ discrete() %>% plot()
 #####################################################################################
 
 
-
-mc $ filter_bad_data <- function( Risk_ ) {
+# deprecated
+mc $ filter_bad_datax <- function( Risk_ ) {
   
   
   
@@ -119,7 +119,7 @@ mc $ make_histogram_discrete <- function(the_cost, Risk_) {
   
   
   
-  some_discrete_stuff <- Risk_ %>% mc $ filter_bad_data() %>% mc$ discrete() 
+  some_discrete_stuff <- Risk_  %>% mc$ discrete() 
   
   
   
@@ -127,27 +127,58 @@ mc $ make_histogram_discrete <- function(the_cost, Risk_) {
   
   q0 <- data.frame(the_cost, the_legend)
   
-  nbin <- (the_cost %>% length())/10 %>% round()
-  nbin <- nbin %>% max(10)
+  nbin <- (the_cost %>% length())/3 %>% round()
+  nbin <- nbin %>% max(19)
+  
+  cat( paste( the_cost %>% length(), nbin))
   
   ggplot(q0, aes(x=the_cost, fill=the_legend))    +    
-    geom_histogram(alpha=0.5, position="identity",bins=nbin )    + 
+    geom_histogram(alpha=0.5, position="identity" , bins=nbin)    +   # bins=nbin
     theme(axis.line = element_line(size=rel(2)) ,text = element_text(size=24)) + 
-    labs(x="$",y="#") +
+    labs(x="$",y="#") #+
   #geom_vline(aes(xintercept = some_discrete_stuff[1])) +
-  geom_vline(aes(xintercept = some_discrete_stuff[2])) +
+  #geom_vline(aes(xintercept = some_discrete_stuff[2])) +
   #geom_vline(aes(xintercept = some_discrete_stuff[3])) +
   #geom_vline(aes(xintercept = some_discrete_stuff[4])) +
   #geom_vline(aes(xintercept = some_discrete_stuff[5])) +
   #geom_vline(aes(xintercept = some_discrete_stuff[6])) +
   #geom_vline(aes(xintercept = some_discrete_stuff[7])) + 
-  geom_vline(aes(xintercept = some_discrete_stuff[8])) 
+  #geom_vline(aes(xintercept = some_discrete_stuff[8])) 
   # geom_vline(aes(xintercept = some_discrete_stuff[9]))
 
+}
   
   
   
+mc $ get_the_filtered_data <- function(the_table, 
+                                       the_business_unit, 
+                                       the_extract_date, 
+                                       the_risk_mitigation) { 
   
+  the_table %>% mc $ some_good_data( the_business_unit, the_extract_date, the_risk_mitigation  )
+}
+
+
+
+# do exactly what we are going to do in the shiny app so that we can properly test it;
+mc $ make_histogram_discrete_filtered <- function(the_table, 
+                                                  the_business_unit, 
+                                                  the_extract_date, 
+                                                  the_risk_mitigation, 
+                                                  samplesize, 
+                                                  repeats ) {
+
+  # filter based on the options & clean up the data appropriately
+  Risk_ <- Risk %>% mc $ some_good_data( the_business_unit, the_extract_date, the_risk_mitigation  )
+  
+  reps <- min(samplesize, Risk_ %>% nrow() )
+  Cost <- mc $ manytimes(Risk_, repeats, reps, 0) 
+  Cost <- (Risk_ %>% nrow()) * Cost / (1000000*reps)
+  g_result <<- Cost
+  b0 <- (g_result %>% length() )/2
+  # qplot(Cost, geom="histogram", main="Cost k GBP") 
+  mc$make_histogram_discrete(Cost, Risk_)
+
 }
   
 
@@ -162,7 +193,7 @@ mc $ some_good_data <- function(the_table, the_business_unit, the_extract_date, 
   
   R2 <- the_table
   
-  R2 <- R2[ the_table$Business_Unit__c==the_business_unit,]
+  if ("All" != the_business_unit)  R2 <- R2[ the_table$Business_Unit__c==the_business_unit,]
   R2 <- R2[ the_table$ExtractDate==the_extract_date,]
   R2 <- R2[ the_table$Risk__Mitigation__c==the_risk_mitigation,]
   
@@ -178,6 +209,11 @@ mc $ some_good_data <- function(the_table, the_business_unit, the_extract_date, 
   R2[, c("prob", "worst", "expected", "best")]
   
 }
+
+
+
+
+
 
 
 
