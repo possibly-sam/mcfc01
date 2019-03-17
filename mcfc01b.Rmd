@@ -66,6 +66,57 @@ table(Risk$ExtractDate, Risk$ReportingMonth)
 
 # the_business_unit, the_extract_date, the_risk_type ) {
 
+
+
+
+# filter by
+# * Business_Unit__c
+# * ExtractDate
+# * Risk__Mitigation__c
+# then clean up the data and analyze
+mc $ some_good_data <- function(the_table, the_business_unit, the_extract_date, the_risk_mitigation ) {
+  
+  R2 <- the_table
+  
+  if ("All" != the_business_unit)  R2 <- R2[ the_table$Business_Unit__c==the_business_unit,]
+  R2 <- R2[ the_table$ExtractDate==the_extract_date,]
+  R2 <- R2[ the_table$Risk__Mitigation__c==the_risk_mitigation,]
+  
+  
+  R2 <- R2 [!is.na(R2$prob),]
+  R2 <- R2 [!is.na(R2$best),]
+  R2 <- R2 [!is.na(R2$expected),]
+  R2 <- R2 [!is.na(R2$worst),]
+  R2 <- R2 [(R2$best < R2$expected) & (R2$expected < R2$worst), ]
+  
+  R2$prob <- R2$prob/100
+  
+  R2[, c("prob", "worst", "expected", "best")]
+  
+}
+
+
+
+
+Risk <- read.csv("./risk_KA_11.csv", stringsAsFactors = FALSE)
+
+
+# ignore null values  ==> 129824 rows
+Risk <- Risk[Risk$Risk__Value__c!="NULL",] 
+Risk <- Risk[Risk$Business_Unit__c!="#N/A",] # filter out the summation row
+Risk <- Risk[!is.na(Risk$INDEX),]
+
+#Risk <- Risk[Risk$Risk__Category__c=="Cost", ]
+# Risk <- Risk[Risk$Risk__Value__c!="0.00",] 
+
+Risk <- Risk %>% mutate(worst=as.numeric(as.character(Risk__Worst_Case__c)))
+Risk <- Risk %>% mutate(expected=as.numeric(as.character(Risk__Value__c)))
+Risk <- Risk %>% mutate(best=as.numeric(as.character(Risk__Best_Case__c)))
+Risk$prob <- abs(Risk$prob)
+
+
+
+
 bu0 <- Risk$Business_Unit__c %>% unique()
 ed0 <- Risk$ExtractDate %>% unique()
 rt0 <- Risk$Risk__Mitigation__c %>% unique()
@@ -96,12 +147,17 @@ for ( bidx in bu0 %>% seq_along()) {
 filter_categories <- data.frame( bus_unit, ext_date, risk_mit, the_length)
 View(filter_categories)
 
+rm(Risk)
+
 ```
 
 
 
 
 ```{r}
+
+
+
 
 mc $ make_histogram_discrete_filtered (Risk, "A14 Section 2", 43348, "Target", 999, 999)
 
@@ -127,6 +183,68 @@ GET https://dev.azure.com/pma0734/MCFC02/_apis/wit/classificationnodes/Areas?api
 q0 <- Risk %>% mc $ get_the_filtered_data ( "A14 Section 2", 43348, "Target")
 
 ```
+
+
+
+# on the object orientification of the R
+
+```{r}
+
+CShape <- function() {
+  
+  result <- new.env(emptyenv())
+  result $ GetArea <- function() 0
+  result
+}
+
+CSquare <- function(side) {
+  
+  parent_ <- CShape()
+  result <- new.env(parent=parent_)
+  result$side=side
+  what_the_parent_has <- ls(parent_)
+  for (k in seq_along(what_the_parent_has)) 
+      assign(what_the_parent_has[k], parent_[[what_the_parent_has[k]]], envir=result)
+  
+  
+  result $ GetArea <- function() side*side
+  result
+  
+}
+
+
+derive_from <- function( the_parent_class ) {
+  parent_ <- the_parent_class()
+  result <- new.env(parent=parent_)
+  what_the_parent_has <- ls(parent_)
+  
+  ls(parent_) %>% map( function(it)  assign(it, parent_[[it]], envir=result) )
+  
+  result
+}
+
+CCircle <- function(radius) {
+  
+  result <- derive_from(CShape)
+  
+  result $ GetArea <- function () pi*radius
+  
+  result
+  
+}
+
+a_square <- CSquare(1.5)
+a_circle <- CCircle(1.5)
+
+a_square $ GetArea()
+a_circle $ GetArea()
+
+
+
+```
+
+
+
 
 
 

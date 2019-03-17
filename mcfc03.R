@@ -84,7 +84,7 @@ mc $ discrete <- function (it) {
   
 }
 
-R2 %>% mc$ discrete() %>% plot()    
+# R2 %>% mc$ discrete() %>% plot()    
 
 
 
@@ -209,7 +209,6 @@ mc $ some_good_data <- function(the_table, the_business_unit, the_extract_date, 
   R2[, c("prob", "worst", "expected", "best")]
   
 }
-
 
 
 

@@ -1,0 +1,425 @@
+---
+title: "mcfc02"
+author: "Phillip Abbott"
+date: "March 16, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+# cleaning up
+
+```{r}
+
+library(tidyverse)
+
+base_class <- function()  new.env(emptyenv())
+
+# only works if the parent has no parameters
+derive_from <- function( the_parent_class ) {
+  parent_ <- the_parent_class()
+  result <- new.env(parent=parent_)
+  what_the_parent_has <- ls(parent_)
+  
+  ls(parent_) %>% map( function(it)  assign(it, parent_[[it]], envir=result) )
+  
+  result
+}
+
+# pass in the parent if you instantiate with parameters
+derive_from_parent <- function( parent_ ) {
+  
+  result <- new.env(parent=parent_  )
+  
+  what_the_parent_has <- ls(parent_)
+  
+  ls(parent_) %>% map( function(it)  assign(it, parent_[[it]], envir=result) )
+  
+  result
+}
+
+
+
+mc <- new.env(emptyenv())
+
+mc$CTable <- function(the_file_name) {
+  
+  result <- base_class()
+  
+  result $ my_table <- read.csv(the_file_name, stringsAsFactors = FALSE)
+  
+  result $ get_size <- function() result $ my_table %>% nrow()
+  
+  result
+  
+}
+
+mc$CCategorizedRiskTable <- function(the_file_name) {
+
+result <- base_class()
+
+# Risk <- read.csv("./risk_KA_11.csv", stringsAsFactors = FALSE)
+ Risk <- read.csv(the_file_name, stringsAsFactors = FALSE)
+
+
+# ignore null values  ==> 129824 rows
+Risk <- Risk[Risk$Risk__Value__c!="NULL",] 
+Risk <- Risk[Risk$Business_Unit__c!="#N/A",] # filter out the summation row
+Risk <- Risk[!is.na(Risk$INDEX),]
+
+# might as well just clean up the silly stuff at the beginning
+  
+
+
+
+Risk <- Risk %>% mutate(worst=as.numeric(as.character(Risk__Worst_Case__c)))
+Risk <- Risk %>% mutate(expected=as.numeric(as.character(Risk__Value__c)))
+Risk <- Risk %>% mutate(best=as.numeric(as.character(Risk__Best_Case__c)))
+
+
+  
+# Risk$prob <- abs(Risk$prob)
+
+
+  Risk <- Risk [!is.na(Risk$prob),]
+  Risk <- Risk [0 <= Risk$prob,]
+  Risk <- Risk [!is.na(Risk$best),]
+  Risk <- Risk [!is.na(Risk$expected),]
+  Risk <- Risk [!is.na(Risk$worst),]
+  Risk <- Risk [(Risk$best < Risk$expected) & (Risk$expected < Risk$worst), ]
+  
+  Risk$prob <- Risk$prob/100
+
+
+result$Risk <- Risk
+result
+
+}
+
+
+
+
+
+the_file_name <- "./risk_KA_11.csv"
+mc$CCleanRiskTable <- function(the_file_name) {
+
+result <-derive_from_parent(mc$CTable(the_file_name ))
+
+Risk <- result$my_table
+
+# ignore null values  ==> 129824 rows
+Risk <- Risk[Risk$Risk__Value__c!="NULL",] 
+Risk <- Risk[Risk$Business_Unit__c!="#N/A",] # filter out the summation row
+Risk <- Risk[!is.na(Risk$INDEX),]
+
+# might as well just clean up the silly stuff at the beginning
+
+Risk <- Risk %>% mutate(worst=as.numeric(as.character(Risk__Worst_Case__c)))
+Risk <- Risk %>% mutate(expected=as.numeric(as.character(Risk__Value__c)))
+Risk <- Risk %>% mutate(best=as.numeric(as.character(Risk__Best_Case__c)))
+
+Risk <- Risk [!is.na(Risk$prob),]
+Risk <- Risk [0 <= Risk$prob,]
+Risk <- Risk [!is.na(Risk$best),]
+Risk <- Risk [!is.na(Risk$expected),]
+Risk <- Risk [!is.na(Risk$worst),]
+Risk <- Risk [(Risk$best < Risk$expected) & (Risk$expected < Risk$worst), ]
+  
+Risk$prob <- Risk$prob/100
+
+result$my_table <- Risk
+result
+
+}
+
+
+# Risk <- CCategorizedRiskTable("./risk_KA_11.csv")
+
+
+
+
+
+
+
+# collapse, like a quantum wave function
+mc $ collapse <- function(best, typical, worst, p=1) {
+  
+  if (p < runif(1) ) return (0) # risk didn't trigger 
+  
+  if (typical < best || worst < typical) {
+    warning("Bad range in collapse()")
+    return(0)
+    tempp_ <- best
+    best <- worst
+    worst <- tempp_
+  }
+  
+  mu <- (best + 4*typical + worst)/6
+  sd <- sqrt( abs((mu-best)*(worst-mu))/7 )
+  #sd <- abs((worst-best)/2)
+  
+  # cat(paste(sd," ", mu))
+  rnorm(1, mu, sd)
+  
+}
+
+# precondition:  the_table has the expected columns:  best, expected, worst, prob
+mc$collapse_table <- function(the_table) {
+  mapply( mc$collapse, the_table$best, the_table$expected, the_table$worst, the_table$prob)
+}
+
+mc$ collapse_table_subset_and_accumulate <- function(the_table, n) {
+  
+  the_table %>% sample_n(n) %>% mc$collapse_table() %>% sum() 
+  
+  
+}
+
+mc$CCollapseableTable <- function(the_file_name) {
+  result <-derive_from_parent(mc$CCleanRiskTable(the_file_name ))
+  
+  
+
+  
+  # if we take a subset, we can assume that the collapse
+  # of the whole would be proportional
+  result $ collapse <- function(n=0)  {
+    # take the whole table if n zero, not specified, or bigger than the whole table anyway.
+    result$my_table %>% nrow() %>% paste("") %>% cat()
+    if (0 == n || result$get_size() < n) 
+      return (result$my_table  %>% mc$collapse_table() %>% sum())/result$get_size() 
+    
+    result$get_size() *(result$my_table  %>% sample_n(n) %>% mc$collapse_table() %>% sum() ) / n
+  }
+  
+  # return a vector
+  result $ many_collapses <- function(numberoftimes, sample_size=0) {
+      1:numberoftimes %>% lapply( function(it)  result $ collapse(sample_size)) %>% unlist()
+  }
+  
+  result
+}
+
+#mc $ Risk <-mc$ CCategorizedRiskTable("./risk_KA_11.csv")
+
+# mc$Risk %>% ls.str()
+
+#mc$Risk$Risk %>% mc$collapse_table_subset_and_accumulate(9)
+
+
+# we assume that the input table has the appropriate columns
+# the output table is just the (p b e w )
+mc$CFilteredTable <- function(the_collapseable_table, the_business_unit, the_extract_date, the_risk_mitigation) {
+  
+  result <- derive_from_parent(the_collapseable_table)
+  
+  R2 <- result $ my_table
+  
+  R2 %>% nrow() %>% cat()
+  
+  if ("All" != the_business_unit)  R2 <- R2[ R2$Business_Unit__c==the_business_unit,]
+  R2 <- R2[ R2$ExtractDate==the_extract_date,]
+  R2 <- R2[ R2$Risk__Mitigation__c==the_risk_mitigation,]
+
+  R2 %>% nrow() %>% cat()
+
+  result $ my_table <-R2[, c("prob",  "best",  "expected", "worst")]
+  result
+
+}
+
+
+
+
+# filter by
+# * Business_Unit__c
+# * ExtractDate
+# * Risk__Mitigation__c
+# assume that the data has already been cleaned up
+mc $ some_filtered_data <- function(the_table, the_business_unit, the_extract_date, the_risk_mitigation ) {
+  
+  R2 <- the_table
+  
+  if ("All" != the_business_unit)  R2 <- R2[ the_table$Business_Unit__c==the_business_unit,]
+  R2 <- R2[ the_table$ExtractDate==the_extract_date,]
+  R2 <- R2[ the_table$Risk__Mitigation__c==the_risk_mitigation,]
+
+  R2[, c("prob", "worst", "expected", "best")]
+  
+}
+
+
+
+
+
+
+
+```
+
+
+```{r}
+
+ q0 <- mc$CCollapseableTable("./risk_KA_11.csv")
+
+q0 %>% ls.str()
+
+q0$collapse()
+
+#x0 <- q0$many_collapses(99)/1000000
+#0 <- q0$many_collapses(99,99)/1000000
+
+#plot(y0~x0)
+#boxplot(x0,y0)
+
+
+
+q1 <- mc$CFilteredTable(q0, "A14 Section 2", 43348, "Target")
+
+q1 $get_size()
+q1 $ many_collapses(99,99)
+
+q1 %>% ls.str()
+
+
+
+```
+
+
+
+```{r}
+
+mc <- new.env(emptyenv())
+
+the_file_name <- "./risk_KA_11.csv"
+mc $ get_table <- function (the_file_name) { read.csv(the_file_name, stringsAsFactors = FALSE) }
+
+
+
+
+
+# collapse, like a quantum wave function
+mc $ collapse <- function(best, typical, worst, p=1) {
+  
+  if (p < runif(1) ) return (0) # risk didn't trigger 
+  
+  if (typical < best || worst < typical) {
+    warning("Bad range in collapse()")
+    return(0)
+    tempp_ <- best
+    best <- worst
+    worst <- tempp_
+  }
+  
+  mu <- (best + 4*typical + worst)/6
+  sd <- sqrt( abs((mu-best)*(worst-mu))/7 )
+  #sd <- abs((worst-best)/2)
+  
+  # cat(paste(sd," ", mu))
+  rnorm(1, mu, sd)
+  
+}
+
+mc $ CMCTable <- function( the_table ) {
+  
+  # the_table %>% nrow() %>% cat()
+  
+  result <- new.env(emptyenv())
+  result$ my_table <- the_table
+  
+  result $ get_size <- function() result$ my_table  %>% nrow()
+  
+  result $ clean_table <- function() {
+
+    Risk <- result$ my_table 
+
+    # ignore null values  ==> 129824 rows
+    Risk <- Risk[Risk$Risk__Value__c!="NULL",] 
+    Risk <- Risk[Risk$Business_Unit__c!="#N/A",] # filter out the summation row
+    Risk <- Risk[!is.na(Risk$INDEX),]
+
+    # might as well just clean up the silly stuff at the beginning
+
+    Risk <- Risk %>% mutate(worst=as.numeric(as.character(Risk__Worst_Case__c)))
+    Risk <- Risk %>% mutate(expected=as.numeric(as.character(Risk__Value__c)))
+    Risk <- Risk %>% mutate(best=as.numeric(as.character(Risk__Best_Case__c)))
+
+    Risk <- Risk [!is.na(Risk$prob),]
+    Risk <- Risk [0 <= Risk$prob,]
+    Risk <- Risk [!is.na(Risk$best),]
+    Risk <- Risk [!is.na(Risk$expected),]
+    Risk <- Risk [!is.na(Risk$worst),]
+    Risk <- Risk [(Risk$best < Risk$expected) & (Risk$expected < Risk$worst), ]
+  
+    Risk$prob <- Risk$prob/100
+  
+    Risk
+  } 
+  
+  result $ table_collapse <- function() mapply( mc$collapse, result$ my_table $best, result$ my_table $expected, result$ my_table $worst, result$ my_table $prob)
+  
+    
+  # if we take a subset, we can assume that the collapse
+  # of the whole would be proportional
+  result $ collapse <- function(n=0)  {
+    # take the whole table if n zero, not specified, or bigger than the whole table anyway.
+    # the_table %>% nrow() %>% paste("") %>% cat()
+    if (0 == n || result$get_size() < n) 
+      return (result $ table_collapse() %>% sum())
+    
+      the_table_subset <- mc $ CMCTable( result$ my_table  %>% sample_n(n))
+      result$get_size() *(the_table_subset$table_collapse() %>% sum() ) / n
+  }
+  
+  # return a vector
+  result $ many_collapses <- function(numberoftimes, sample_size=0) {
+      1:numberoftimes %>% lapply( function(it)  result $ collapse(sample_size)) %>% unlist()
+  }
+  
+
+result $ get_filtered_data <- function(the_business_unit, the_extract_date, the_risk_mitigation) {  
+  R2 <- result$ my_table 
+  
+  # R2 %>% nrow() %>% cat()
+  
+  if ("All" != the_business_unit)  R2 <- R2[ R2$Business_Unit__c==the_business_unit,]
+  R2 <- R2[ R2$ExtractDate==the_extract_date,]
+  R2 <- R2[ R2$Risk__Mitigation__c==the_risk_mitigation,]
+
+  # R2 %>% nrow() %>% cat()
+
+  R2[, c("prob",  "best",  "expected", "worst")]
+ }
+
+  result
+  
+} # end class CMCTable
+
+
+q0 <-   mc$get_table(the_file_name) %>% mc$CMCTable()
+
+q1 <- q0 $clean_table() %>% mc$CMCTable()
+
+q2 <- q1 $get_filtered_data("A14 Section 2", 43348, "Target" ) %>% mc$CMCTable()
+
+q0 %>% ls.str()
+
+q0$get_size()
+q1$get_size()
+q2$get_size()
+
+q2$many_collapses(99,99)
+
+
+
+```
+
+
+
+
+
+
+
