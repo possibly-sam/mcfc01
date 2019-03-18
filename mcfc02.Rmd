@@ -418,6 +418,33 @@ q2$many_collapses(99,99)
 ```
 
 
+```{r}
+the_file_name <- "./risk_KA_11.csv"
+
+
+# 27794 obs. of  15 variables:
+q0 <-   mc$get_table(the_file_name) %>% mc$CMCTable()
+
+# 14474 obs. of  18 variables:
+q1 <- q0 $clean_table() %>% mc$CMCTable()
+
+
+q2 <- q1 $get_filtered_data("A14 Section 2", 43348, "Target" ) %>% mc$CMCTable()
+
+
+q2$many_collapses(99,99) %>% hist()
+
+q2 %>% ls.str()
+
+q1$my_table$Business_Unit__c %>% unique()
+
+
+```
+
+
+
+
+
 
 
 

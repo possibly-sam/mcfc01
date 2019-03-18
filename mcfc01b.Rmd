@@ -149,6 +149,10 @@ View(filter_categories)
 
 rm(Risk)
 
+filter_categories %>% write.csv("filter_categories")
+
+filter_categories[ order(filter_categories$the_length), ] %>% View()
+
 ```
 
 
@@ -159,7 +163,7 @@ rm(Risk)
 
 
 
-mc $ make_histogram_discrete_filtered (Risk, "A14 Section 2", 43348, "Target", 999, 999)
+mc $ make_histogram_discrete_filtered (Risk, "A14 Section 2", 43376, "Target", 999, 999)
 
 
 ```
