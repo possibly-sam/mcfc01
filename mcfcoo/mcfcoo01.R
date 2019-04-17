@@ -2,6 +2,8 @@
 mc <- new.env(emptyenv())
 
 # the_file_name <- "./risk_KA_11.csv"
+
+# read the table from the specified file name
 mc $ get_table <- function (the_file_name) { read.csv(the_file_name, stringsAsFactors = FALSE) }
 
 
@@ -43,7 +45,7 @@ mc $ CRiskItem <- function ( p, b, e, w) {
   result $ collapse <- function() mc$collapse( result$b, result$e, result$w, result$p)
   
   result $ mu <- function() result$p*( result$b + 4*result$e + result$w) / 6
-  result $ sigma <- function() ((result$w-result$mu())* (result$mu() - result$b) / 7 ) %>% abs()
+  result $ sigma <- function() p* ((result$w-result$mu())* (result$mu() - result$b) / 7 ) %>% abs() %>% sqrt()
   
   #result $ collapsed <- result$ collapse()
   ##result $ mu_ <- result$mu()
@@ -141,6 +143,11 @@ mc $ CMCTable <- function( the_table ) {
   result $ get_collapsed_data <- function( ) {
     the_collapsed_table <- result$my_table
     # the_collapsed_table <- the_collapsed_table %>% mutate(instance=mc $ CRiskItem(prob, best, expected, worst) $ collapsed)
+    the_collapsed_table <- the_collapsed_table %>% cbind( instance=mapply ( function(p, b, e, w) mc $ CRiskItem (p,b,e,w)$collapse() , 
+                                                                   the_collapsed_table$prob, 
+                                                                   the_collapsed_table$best, 
+                                                                   the_collapsed_table$expected, 
+                                                                   the_collapsed_table$worst)  )
     the_collapsed_table
   }
   
@@ -152,6 +159,23 @@ mc $ CMCTable <- function( the_table ) {
   result
   
 } # end class CMCTable
+
+mc $ CMCCollapsedTable <- function(the_table) {
+  
+  result <- new.env(emptyenv())
+  
+  # the expected value of the sum is the sum of the expected values;
+  result $ mu <- the_table$mu %>% sum()
+  # TODO:  we can calculate the variance of the sum with the covariance matrix
+  #        to account for correlation between the risk items;
+  # the variance of the sum is the sum of the variances (independence assumption)
+  result $ sigma <- the_table$sigma %*% the_table$sigma %>% sqrt()
+  
+  result $ instance <- the_table$instance %>% sum()
+  
+  result
+
+  }
 
 
 
@@ -176,5 +200,17 @@ mc $ test_CMCTable <- function(the_file_name) {
 
 # "./risk_KA_11.csv" %>% mc $ test_CMCTable
 
+# Two-Factor Authentication Backup Codes
 
+slack <- read.csv(text='code
+272467
+579252
+921833
+986372
+465389
+215318
+441593
+308278
+887649
+905735')
 

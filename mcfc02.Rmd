@@ -442,6 +442,118 @@ q1$my_table$Business_Unit__c %>% unique()
 ```
 
 
+# Wed 20 Mar XIX, Saltaire
+
+
+```{r}
+getwd()
+source("mcfcoo/mcfcoo01.R")
+
+the_file_name <- "./risk_KA_11.csv"
+
+
+# 27794 obs. of  15 variables:
+q0 <-   mc$get_table(the_file_name) %>% mc$CMCTable()
+
+# 14474 obs. of  18 variables:
+q1 <- q0 $clean_table() %>% mc$CMCTable()
+
+
+q2 <- q1 $get_filtered_data("A14 Section 2", 43348, "Target" ) %>% mc$CMCTable()
+
+q3 <- q2 $ my_table %>% mc $ CMCCollapsedTable()
+
+q3  %>% ls.str()
+
+
+```
+
+# But what do the probabilities & the values look like?
+
+
+
+```{r}
+
+source("mcfcoo/mcfcoo01.R")
+
+the_file_name <- "./risk_KA_11.csv"
+
+
+# 27794 obs. of  15 variables:
+q0 <-   mc$get_table(the_file_name) %>% mc$CMCTable()
+
+# 14474 obs. of  18 variables:
+q1 <- q0 $clean_table() %>% mc$CMCTable()
+
+
+q2 <- q1 $get_filtered_data("A14 Section 2", 43348, "Target" ) %>% mc$CMCTable()
+
+
+p <- q1 $ my_table $ prob
+b <- q1 $ my_table $ b
+e <- q1 $ my_table $ e
+w <- q1 $ my_table $ w
+
+p %>% hist( breaks=30, main="Prob")
+b %>% log() %>% hist( breaks=30, main="Log Best")
+e %>% log() %>% hist( breaks=30, main="Log Expected")
+w %>% log() %>% hist( breaks=30, main="Log Worst")
+
+
+
+```
+
+
+
+
+
+
+```{r}
+
+p %>% sample(4500) %>% shapiro.test( )
+b %>% log() %>% sample(4500) %>% shapiro.test()
+e %>% log() %>% sample(4500) %>% shapiro.test()
+w %>% log() %>% sample(4500) %>% shapiro.test()
+
+
+
+```
+
+```{r}
+
+p %>% table() %>% sort(TRUE) %>% head()
+b %>% table() %>% sort(TRUE) %>% head()
+e %>% table() %>% sort(TRUE) %>% head()
+w %>% table() %>% sort(TRUE) %>% head()
+
+
+```
+
+
+
+
+
+```{r}
+
+
+hm <- lm(w~b)
+hm %>% summary()
+plot(w~b)
+abline(hm)
+
+
+```
+
+
+```{r}
+
+bb <- b[b>0]
+ww <- w[b>0]
+x0 <- (ww-bb)/bb
+x0 %>% quantile(seq(0,1,.01))  %>% plot()
+
+
+```
 
 
 

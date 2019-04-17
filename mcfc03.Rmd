@@ -1,0 +1,74 @@
+---
+title: "mcfc03"
+author: "Phillip Abbott"
+date: "March 20, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+# stress test running many
+
+
+```{r}
+
+library(tidyverse)
+
+
+source("mcfcoo/mcfcoo01.R")
+
+the_file_name <- "./risk_KA_11.csv"
+
+
+# 27794 obs. of  15 variables:
+q0 <-   mc$get_table(the_file_name) %>% mc$CMCTable()
+
+# 14474 obs. of  18 variables:
+q1 <- q0 $clean_table() %>% mc$CMCTable()
+
+
+q2 <- q1 $get_filtered_data("A14 Section 4", 43348, "Target" ) %>% mc$CMCTable()
+
+n = 99999
+
+#q2$many_collapses(n,0) %>% hist(breaks=30, main=paste(n, "reps"))
+
+# 99,999 reps in < 3 min
+
+
+
+```
+
+
+
+# some test
+
+```{r}
+
+some_test <- function(n)  {
+
+q2 <- q1 $get_filtered_data(paste("A14 Section", n), 43348, "Target" ) %>% mc$CMCTable()
+  
+q2$many_collapses(9999,0) %>% hist(breaks=30, main=paste(9999, "reps of ", paste("A14 Section", n), "data"))  
+}
+
+some_test(1)
+some_test(2)
+some_test(3)
+some_test(4)
+some_test(5)
+some_test(6)
+
+
+```
+
+`r some_test(1)`
+
+
+
+
+
